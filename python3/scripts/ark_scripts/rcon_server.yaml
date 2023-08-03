@@ -1,0 +1,18 @@
+# YAML parameter file to inform ark scripts
+#
+# Note: current values are default or place holders, please modify for your setup
+Steam_Home: /home/steam
+Exec_Path: ShooterGame/Binaries/Linux/ShooterGameServer
+Backup_Directory: /backup/ark
+Map: TheIsland
+Session: 'ServerName'
+Server_Pass: ''
+Query_Port: 27015
+Max_Players: 10
+Rcon_Enabled: True
+Rcon_Port: 32330
+Rcon_Pass: ''
+Host: 'localhost'
+Command_Options:
+ -server
+ -log

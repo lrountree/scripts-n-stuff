@@ -1,0 +1,25 @@
+version: "3.9"
+
+services:
+
+  drupal:
+    container_name: drupal1
+    image: drupal
+    networks:
+      - test2
+    ports:
+      - "8080:80"
+
+  postgres:
+    container_name: postgres1
+    image: postgres
+    networks:
+      - test2
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: mypass
+      POSTGRES_DB: drupal
+
+networks:
+  test2:
+    name: test2
