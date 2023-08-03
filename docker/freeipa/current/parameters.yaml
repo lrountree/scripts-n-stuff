@@ -1,0 +1,91 @@
+# YAML parameters file to define a FreeIPA cluster
+
+## Node specific info
+Node_FQDN: 'ipa-master-1.test.local'
+Volumes:
+  - '/etc/ntp.conf:/etc/ntp.conf:ro'
+  - '/etc/localtime:/etc/localtime:ro'
+  - '/etc/timezone:/etc/timezone:ro'
+  - '/sys/fs/cgroup:/sys/fs/cgroup:ro'
+  - 'ipa-data:/data:Z'
+Ports:
+  - '80/tcp:80'
+  - '88/tcp:88'
+  - '389/tcp:389'
+  - '443/tcp:443'
+  - '464/tcp:464'
+  - '636/tcp:636'
+  - '88/udp:88'
+  - '464/udp:464'
+
+## External DNS info
+Zone_Rev_IP: '01.002.03.in-addr.arpa'
+Zone_Fwd_DNS: 'test.local'
+
+## Cluster info
+# Define domain
+Domain_Name: 'test.local'
+
+# Define cluster master node hostnames and IP adresses
+Master_Nodes:
+  MASTER_1: 
+    - 'ipa-master-1'
+    - '1.2.3.4'
+  MASTER_2: 
+    - 'ipa-master-2'
+    - '5.6.7.8'
+
+# Define cluster satellite node hostnames and IP addresses
+Satellite_Nodes:
+  SAT_1:
+    - 'ipa-satellite-1'
+    - '11.22.33.44'
+  SAT_2:
+    - 'ipa-satellite-2'
+    - '55.66.77.88'
+
+# Define cluster test client node hostnames and IP addresses
+Client_Nodes:
+  CLIENT_1:
+    - 'client-1'
+    - '111.222.333.444'
+  CLIENT_2:
+    - 'client-2'
+    - '555.666.777.888'
+
+# Define IPA Image
+Container_Image: 'ipa:1.0'
+Docker_File: 'ipa.Dockerfile'
+Password_File: 'auth.yaml'
+
+## IPA Install
+# Master1 Node Options
+Master1_Command: 'ipa-server-install'
+Master1_Options:
+  - 'reverse-zone=VAL'
+  - 'realm=VAL'
+  - 'hostname=VAL'
+  - 'ds-password=VAL'
+
+# Master2 Node Options
+Master2_Options:
+  - 'setup-ca'
+
+# Satellite Node Options
+Replica_Command: 'ipa-replica-install'
+Replica_Options:
+  - 'server=VAL'
+  - 'principal=VAL'
+
+# All Node Options
+IPA_Install_Options:
+  - 'unattended'
+  - 'no-ntp'
+  - 'mkhomedir'
+  - 'no-host-dns'
+  - 'setup-dns'
+  - 'no-dnssec-validation'
+  - 'auto-forwarders'
+  - 'allow-zone-overlap'
+  - 'domain=VAL'
+  - 'admin-password=VAL'

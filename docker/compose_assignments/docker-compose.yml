@@ -1,0 +1,34 @@
+# create your drupal and postgres config here, based off the last assignment
+version: "3.9"
+
+services:
+
+  drupal:
+    container_name: drupal
+    build:
+      context: .
+      dockerfile: drupal.Dockerfile
+    image: custom-drupal
+    networks:
+      - drupal
+    ports:
+      - "8080:80"
+
+  postgres:
+    container_name: postgres
+    image: postgres
+    networks:
+      - drupal
+    volumes:
+      - drupal-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: mypass
+      POSTGRES_DB: drupal
+   
+networks:
+  drupal:
+    name: drupal
+
+volumes:
+  drupal-data: {}
