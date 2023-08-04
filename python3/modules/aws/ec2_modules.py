@@ -93,6 +93,8 @@ class ec2_get_info:
             response = self.ec2_client.describe_instances(Filters=[{'Name': 'tag:Name', 'Values': [NAME]}])['Reservations']
         except:
             return False, str(sys.exc_info()[1])
+        if not response:
+            return False, 'No instance named ' + NAME + ', value is case sensative!'
         return True, response
 
     def instance_info_by_id(self, ID):
