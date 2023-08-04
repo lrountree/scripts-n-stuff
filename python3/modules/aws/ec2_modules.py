@@ -152,6 +152,7 @@ class ec2(ec2_get_info):
     def __init__(self, session):
         ec2_get_info.__init__(self, session)
         self.session = session
+        self.ec2_client = session.client('ec2')
         
     def name(self, NAME):
         '''
@@ -254,3 +255,33 @@ class ec2(ec2_get_info):
         if not instance_info[0]:
             return False, instance_info[1]
         return True, instance_info[1][0]['Instances'][0]['State']['Name']
+
+    def start(self, ID):
+        '''
+        Start instance if it's in stopped state
+        ID = Instance ID
+        '''
+        instance_state = ec2(self.session).state(ID)
+        if instance_state[0] and instance_state[1] == 'stopped':
+            try:
+                response = self.ec2_client.start_instances(InstanceIds=[ID])
+            except:
+                return False, str(sys.exc_info()[1])
+        elif instance_state[0] and instance_state[1] != 'stopped':
+            return False, 'Instance state is ' + instance_state[1] + ' instance must be stopped!'
+        return True, response
+
+    def stop(self, ID):
+        '''
+        Stop instance if it's in running state
+        ID = Instance ID
+        '''
+        instance_state = ec2(self.session).state(ID)
+        if instance_state[0] and instance_state[1] == 'running':
+            try:
+                response = self.ec2_client.stop_instances(InstanceIds=[ID])
+            except:
+                return False, str(sys.exc_info()[1])
+        elif instance_state[0] and instance_state[1] != 'running':
+            return False, 'Instance state is ' + instance_state[1] + ' instance must be running!'
+        return True, response
