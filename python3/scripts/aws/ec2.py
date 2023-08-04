@@ -1,4 +1,4 @@
-# Check volumes attached to instance
+# Perform EC2 instance tasks
 # Maintained by: Lucas Rountree (lredvtree@gmail.com)
 
 # Import General Modules
@@ -23,9 +23,11 @@ def get_state(IN):
 
 if __name__ == '__main__':
     import argparse
-    parser = argparse.ArgumentParser(description='Get attached volumes of AWS EC2 instances', prog='ec2_vol')
+    parser = argparse.ArgumentParser(description='Peform standard tasks against ec2 instances', prog='ec2')
     parser.add_argument('-p', action='store', type=str, default='default', help='AWS profile to use, from credentials file. Default is "default"')
     parser.add_argument('-r', action='store', type=str, default='us-west-2', help='AWS region, default is "us-west-2"')
+    parser.add_argument('-i', action='store', type=str, required=True, help='Instance identifier, either value of Name tag or instance ID')
+    parser.add_argument('-c', action='store', type=str, choices=['state', 'start', 'stop'], required=True, help='Command to issue to instance, options are: state, start, stop')
 
     args = parser.parse_args()
 
@@ -37,6 +39,22 @@ if __name__ == '__main__':
         ec2_client = ses.client('ec2')
         ec2_info = ec2mod.ec2_get_info(ses)
 
+    check_value = ec2_info.instance_info_by_name(args.i)
+    if check_value[0] and check_value[1]:
+        instance_id = check_value[1][0]['Instances'][0]['InstanceId']
+    else:
+        instance_id = args.i
+
+    if args.c == 'state':
+        response = get_state(instance_id)
+        print(response[1])
+    elif args.c == 'start':
+        response = ec2.start(instance_id)
+        print(response[1]['StartingInstances'][0]['CurrentState']['Name'])
+    elif args.c == 'stop':
+        response = ec2.stop(instance_id)
+        print(response[1]['StoppingInstances'][0]['CurrentState']['Name'])
+
 else:
     AWS_Profile = input('AWS Profile Name: ')
     AWS_Region = input('AWS Region: ')
@@ -44,32 +62,3 @@ else:
     ec2 = ec2mod.ec2(ses)
     ec2_client = ses.client('ec2')
     ec2_info = ec2mod.ec2_get_info(ses)
-
-instance_list = ec2_info.list_all_instances()
-
-if not instance_list[0]:
-    print(instance_list[1])
-
-for INSTANCE in instance_list[1]:
-    state = get_state(INSTANCE[1])
-
-    if state[0] and state[1] == 'stopped':
-        vol_list = ec2.get_volumes(INSTANCE[1])
-
-        if vol_list[0]:
-            volumes = []
-
-            for VOL in vol_list[1]:
-                if VOL['VolumeType'] == 'gp2':
-                    volumes.append([VOL['VolumeId'], VOL['VolumeType']])
-
-            if volumes:
-                print('Instance Name:', INSTANCE[0])
-                print('ID:', INSTANCE[1])
-                print('State:', state[1])
-                print('Volumes:')
-                for X in volumes:
-                    print(X[0], X[1])
-                print('\n')
-        else:
-            print('No Volumes Found!\n')
