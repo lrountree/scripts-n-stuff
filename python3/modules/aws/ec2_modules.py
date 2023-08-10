@@ -270,7 +270,7 @@ class ec2(ec2_get_info):
             except:
                 return False, str(sys.exc_info()[1])
         elif instance_state[0] and instance_state[1] != 'stopped':
-            return False, 'Instance state is ' + instance_state[1] + ' instance must be stopped!'
+            return False, 'Instance state is already ' + instance_state[1] + '!'
         return True, response
 
     def stop(self, ID):
@@ -285,5 +285,5 @@ class ec2(ec2_get_info):
             except:
                 return False, str(sys.exc_info()[1])
         elif instance_state[0] and instance_state[1] != 'running':
-            return False, 'Instance state is ' + instance_state[1] + ' instance must be running!'
+            return False, 'Instance state is already ' + instance_state[1] + '!'
         return True, response

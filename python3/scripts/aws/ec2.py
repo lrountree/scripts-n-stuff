@@ -55,10 +55,16 @@ if __name__ == '__main__':
         print(get_state(args.i)[1])
     elif args.c == 'start':
         response = ec2.start(args.i)
-        print(response[1]['StartingInstances'][0]['CurrentState']['Name'])
+        if not response[0]:
+            print(response[1])
+        else:
+            print(response[1]['StartingInstances'][0]['CurrentState']['Name'])
     elif args.c == 'stop':
         response = ec2.stop(args.i)
-        print(response[1]['StoppingInstances'][0]['CurrentState']['Name'])
+        if not response[0]:
+            print(response[1])
+        else:
+            print(response[1]['StoppingInstances'][0]['CurrentState']['Name'])
 
 else:
     AWS_Profile = input('AWS Profile Name: ')
