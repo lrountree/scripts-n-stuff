@@ -27,3 +27,19 @@ def set_session(PROFILE='default', REGION='us-west-2'):
         print(sys.exc_info()[1])
         sys.exit(1)
     return session
+
+def no_session(REGION='us-west-2'):
+    '''
+    Provide AWS SDK session block without profile (good for instance roles)
+    no_session(REGION)
+    REGION = AWS region to use, default is "us-west-2"
+    '''
+    try:
+        session = boto3.Session(region_name=REGION)
+    except TypeError as ERROR:
+        print(ERROR)
+        sys.exit(1)
+    except:
+        print(sys.exc_info()[1])
+        sys.exit(1)
+    return session
