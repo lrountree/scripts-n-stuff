@@ -80,7 +80,18 @@ class ec2_get_info:
             for NAME in ITEM['Tags']:
                 if NAME['Key'] == 'Name':
                     name_id = NAME['Value']
-                response.append({name_id, ITEM['NatGatewayId']})
+                response.append({'Name': name_id, 'ID': ITEM['NatGatewayId']})
+        return True, response
+
+    def nat_gateway_state(self, ngw_id):
+        '''
+        Return NAT gateway state
+        ngw_id = NAT gateway ID
+        ''' 
+        try:
+            response = self.ec2_client.describe_nat_gateways(NatGatewayIds=[ngw_id])['NatGateways'][0]['State']
+        except:
+            return False, str(sys.exc_info()[1])
         return True, response
 
     def instance_info_by_name(self, NAME):
@@ -124,6 +135,18 @@ class ec2_get_info:
                 return False, str(sys.exc_info()[1])
         return True, response
 
+    def instance_tag_value(self, ID, TAG):
+        '''
+        Return EC2 instance tag value by tag name
+        ID = EC2 instance ID
+        TAG = EC2 instance tag name
+        '''
+        try:
+            response = self.ec2_client.describe_tags(Filters=[{'Name': 'resource-id', 'Values': [ID]}, {'Name': 'key', 'Values': [TAG]}])['Tags'][0]['Value']
+        except:
+            return False, str(sys.exc_info()[1])
+        return True, response
+
     def find_ami_name(self, OWNER, ARCH, PUB, NAME):
         '''
         Return list of AMI IDs that match search filter NAME
@@ -147,6 +170,32 @@ class ec2_get_info:
             response = self.ec2_client.describe_volumes(Filters=[{'Name': 'attachment.instance-id', 'Values': [ID]}])['Volumes']
         except:
             return False, str(sys.exc_info()[1])
+        return True, response
+
+    def subnet_name(self, ID):
+        '''
+        Return value of name tag by subnet ID
+        ID = Subnet ID
+        '''
+        try:
+            response = self.ec2_client.describe_tags(Filters=[{'Name': 'resource-id', 'Values': [ID]}, {'Name': 'key', 'Values': ['Name']}])['Tags'][0]['Value']
+        except:
+            return False, str(sys.exc_info()[1])
+        if not response:
+            return False, 'No subnet found!'
+        return True, response
+
+    def subnet_id(self, NAME):
+        '''
+        Return subnet ID by subnet name tag value
+        NAME = Subnet name tag value
+        '''
+        try:
+            response = self.ec2_client.describe_tags(Filters=[{'Name': 'tag:Name', 'Values': [NAME]}])['Tags'][0]['ResourceId']
+        except:
+            return False, str(sys.exc_info()[1])
+        if not response:
+            return False, 'No subnet found!'
         return True, response
 
 class ec2(ec2_get_info):
