@@ -1,0 +1,64 @@
+all:
+  children:
+
+    test:
+      vars:
+        ansible_user: ec2-user
+        cicd_key_file: .secure_files/gitlab-test.pem
+        primary_domain: domain.com
+        sub_domain: internal
+        zabbix_region: us-west-2
+        zabbix_company: companyname
+
+      hosts:
+        gitlab-test-01:
+          ansible_host: 10.0.0.20
+          host_name: gitlab-test-01
+          zabbix_purpose: test
+
+        test-host-01:
+          ansible_host: 10.0.0.21
+          host_name: ANSIBLE-TEST-01
+          zabbix_purpose: test
+
+    companyname:
+      vars:
+        primary_domain: domain.com
+        sub_domain: internal
+        zabbix_region: us-west-2
+        zabbix_company: companyname
+
+      children:
+
+        gitlab-runners:
+          vars:
+            ansible_user: ec2-user
+            cicd_key_file: .secure_files/gitlab-runner.pem
+
+          hosts:
+            gitlab-runner-01:
+              ansible_host: 10.0.0.22
+              host_name: gitlab-runner-01
+              zabbix_purpose: gitlab
+
+        zabbix_servers:
+          vars:
+            ansible_user: ubuntu
+            cicd_key_file: .secure_files/zabbix.pem
+
+          hosts:
+            prod-zabbix:
+              ansible_host: 10.0.0.23
+              host_name: prod-zabbix
+              zabbix_purpose: zabbix_server
+
+        dev_instances:
+          vars:
+            ansible_user: ec2-user
+            cicd_key_file: .secure_files/gitlab-test.pem
+
+          hosts:
+            ec2-host-01:
+              ansible_host: 10.0.0.24
+              host_name: ec2-host-01
+              zabbix_purpose: dev

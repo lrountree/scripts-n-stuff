@@ -1,0 +1,129 @@
+---
+- name: Zabbix Playbook
+  hosts: "{{ HOSTS }}"
+  gather_facts: yes
+  become: true
+  vars:
+    Amazon_2_url: "https://repo.zabbix.com/zabbix/6.4/rhel/7/x86_64/zabbix-release-6.4-1.el7.noarch.rpm"
+    Amazon_2023_url: "https://repo.zabbix.com/zabbix/6.4/rhel/9/x86_64/zabbix-release-6.4-1.el9.noarch.rpm"
+    Ubuntu_22_04_url: "https://repo.zabbix.com/zabbix/6.4/ubuntu/pool/main/z/zabbix-release/zabbix-release_6.4-1+ubuntu22.04_all.deb"
+
+  tasks:
+
+    - name: Gather Package Facts
+      package_facts:
+        manager: auto
+
+    - name: Generate Metadata Token
+      uri:
+        url: http://169.254.169.254/latest/api/token
+        method: PUT
+        return_content: true
+        headers:
+          X-aws-ec2-metadata-token-ttl-seconds: 21600
+      register: TOKEN
+
+    - name: Get Security Groups
+      uri:
+        url: http://169.254.169.254/latest/meta-data/security-groups
+        return_content: true
+        headers:
+          X-aws-ec2-metadata-token: "{{ TOKEN.content }}"
+      register: security_groups
+      failed_when: security_groups is failed
+
+    - name: Check Security Groups
+      fail:
+        msg: Security group SG.NAME is NOT attached to EC2 instance and is required by Zabbix!
+      when: "'SG.NAME' not in security_groups.content"
+
+    - name: Amazon_2 Check Zabbix Repository
+      shell:
+        cmd: if [[ $(yum repolist | grep zabbix) ]]; then echo "True"; else echo "False"; fi
+      register: a2_repo_check
+      when: ansible_facts['distribution_major_version'] == "2" and ansible_facts['distribution_file_variety'] == "Amazon"
+
+    - name: Amazon_2 Install Zabbix Repository
+      command:
+        cmd: rpm -Uvh "{{ Amazon_2_url }}"
+      when: ansible_facts['distribution_major_version'] == "2" and ansible_facts['distribution_file_variety'] == "Amazon" and a2_repo_check.stdout == "False"
+
+    - name: Amazon_2 Update Yum Cache
+      command:
+        cmd: yum check-update
+        cmd: yum clean all
+      when: ansible_facts['distribution_major_version'] == "2" and ansible_facts['distribution_file_variety'] == "Amazon"
+
+    - name: Amazon_2023 Check Zabbix Repository
+      shell:
+        cmd: if [[ $(dnf repolist | grep zabbix) ]]; then echo "True"; else echo "False"; fi
+      register: a2023_repo_check
+      when: ansible_facts['distribution_major_version'] == "2023" and ansible_facts['distribution_file_variety'] == "Amazon"
+
+    - name: Amazon_2023 Install Zabbix Repository
+      command:
+        cmd: rpm -Uvh "{{ Amazon_2023_url }}"
+      when: ansible_facts['distribution_major_version'] == "2023" and ansible_facts['distribution_file_variety'] == "Amazon" and a2023_repo_check.stdout == "False"
+
+    - name: Amazon_2023 Update Dnf Cache
+      command:
+        cmd: dnf check-update
+        cmd: dnf clean all
+      when: ansible_facts['distribution_major_version'] == "2023" and ansible_facts['distribution_file_variety'] == "Amazon"
+
+    - name: Ubuntu_22 Check Zabbix Repository
+      command:
+        cmd: dpkg-query -W zabbix*
+      register: ubuntu_repo_check
+      failed_when: ubuntu_repo_check.rc > 1
+      changed_when: ubuntu_repo_check.rc == 1
+      when: ansible_facts['distribution_major_version'] == "22" and ansible_facts['distribution_file_variety'] == "Debian"
+
+    - name: Ubuntu_22 Download Zabbix Repository
+      get_url:
+        url: "{{ Ubuntu_22_04_url }}"
+        dest: /tmp/zabbix_repo.deb
+      when: ansible_facts['distribution_major_version'] == "22" and ansible_facts['distribution_file_variety'] == "Debian" and ubuntu_repo_check.rc == 1
+
+    - name: Ubuntu_22 Install Zabbix Repository
+      apt:
+        deb: /tmp/zabbix_repo.deb
+      when: ansible_facts['distribution_major_version'] == "22" and ansible_facts['distribution_file_variety'] == "Debian" and ubuntu_repo_check.rc == 1
+
+    - name: Ubuntu_22 Update Apt Cache
+      command:
+        cmd: apt update
+      when: ansible_facts['distribution_major_version'] == "22" and ansible_facts['distribution_file_variety'] == "Debian"
+      
+    - name: Install Zabbix Agent_2
+      package:
+        name:
+          - zabbix-agent2
+          - zabbix-agent2-plugin-*
+        state: latest
+      notify:
+      - Stop Zabbix Agent
+
+    - name: Create Zabbix Config
+      template:
+        src: ../library/zabbix_agent2.conf
+        dest: /etc/zabbix/zabbix_agent2.conf
+        owner: root
+        group: root
+        mode: 0644
+        backup: true
+      with_items:
+        - { ip: "{{ ansible_facts['default_ipv4']['address'] }}", region: "{{ zabbix_region }}", purpose: "{{ zabbix_purpose }}", company: "{{ zabbix_company }}" }
+
+    - name: Enable and Restart Zabbix Agent Service
+      systemd:
+        name: zabbix-agent2.service
+        state: restarted
+        enabled: true
+
+  handlers:
+
+    - name: Stop Zabbix Agent
+      systemd:
+        name: zabbix-agent2.service
+        state: stopped

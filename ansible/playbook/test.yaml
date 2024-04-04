@@ -1,0 +1,22 @@
+---
+- name: Test Playbook
+  hosts: "{{ HOSTS }}"
+  tasks:
+    - name: Ping
+      ping:
+
+    - name: Print IP Address
+      debug:
+        msg: "{{ ansible_facts['default_ipv4']['address'] }}"
+
+    - name: Print OS
+      debug:
+        msg: "{{ ansible_facts['distribution_file_variety'] }}"
+
+    - name: Print OS Major Version
+      debug:
+        msg: "{{ ansible_facts['distribution_major_version'] }}"
+
+    - name: Print Package Manager
+      debug:
+        msg: "{{ ansible_facts['pkg_mgr'] }}"

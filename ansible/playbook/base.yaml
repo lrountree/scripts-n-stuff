@@ -1,0 +1,90 @@
+---
+- name: Base Playbook
+  hosts: "{{ HOSTS }}"
+  gather_facts: yes
+  become: true
+
+  tasks:
+
+    - name: Generate Metadata Token
+      uri:
+        url: http://169.254.169.254/latest/api/token
+        method: PUT
+        return_content: true
+        headers:
+          X-aws-ec2-metadata-token-ttl-seconds: 21600
+      register: TOKEN
+
+    - name: Get Security Groups
+      uri:
+        url: http://169.254.169.254/latest/meta-data/security-groups
+        return_content: true
+        headers:
+          X-aws-ec2-metadata-token: "{{ TOKEN.content }}"
+      register: security_groups
+      failed_when: security_groups is failed
+
+    - name: Check Security Groups
+      fail:
+        msg: Security group SG.NAME is NOT attached to EC2 instance and is required by Zabbix!
+      when: "'SG.NAME' not in security_groups.content"
+
+    - name: Set Host Name
+      hostname:
+        use: systemd
+        name: "{{ host_name }}.{{ sub_domain }}.{{ primary_domain }}"
+
+    - name: Write To Host File
+      lineinfile:
+        path: /etc/hosts
+        line: "{{ ansible_facts['default_ipv4']['address'] }}\t{{ host_name }}.{{ sub_domain }}.{{ primary_domain }}"
+        create: yes
+
+    - name: Run Updates Via Yum
+      yum:
+        name: "*"
+        state: latest
+        update_cache: true
+      when: ansible_facts['pkg_mgr'] == "yum"
+
+    - name: Run Updates Via Dnf
+      dnf:
+        name: "*"
+        state: latest
+        update_cache: true
+      when: ansible_facts['pkg_mgr'] == "dnf"
+
+    - name: Run Updates Via Apt
+      apt:
+        name: "*"
+        state: latest
+        update_cache: true
+      when: ansible_facts['pkg_mgr'] == "apt"
+
+    - name: Upload Banner File
+      copy:
+        src: ../library/security_banner
+        dest: /etc/ssh/security_banner
+        owner: root
+        group: root
+        mode: 0666
+
+    - name: Enable Banner File
+      lineinfile:
+        path: /etc/ssh/sshd_config
+        line: "Banner /etc/ssh/security_banner"
+        create: yes
+      notify: Restart SSHD
+
+    - name: Install HTOP
+      package:
+        name:
+          - htop
+        state: latest
+
+  handlers:
+
+    - name: Restart SSHD
+      service:
+        name: sshd.service
+        state: restarted
