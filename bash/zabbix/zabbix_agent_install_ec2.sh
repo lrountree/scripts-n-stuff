@@ -1,7 +1,7 @@
 #! /bin/bash
 #
 # This script is intended to install the Zabbix Agent, version 2
-# Maintained By: Lucas Rountree (lucas.rountree@rhombuspower.com)
+# Maintained By: Lucas Rountree
 #
 # Command:
 # sudo bash zabbix_agent_install_ec2.sh <ip address> <region> <purpose> <company>

@@ -1,7 +1,7 @@
 #! /bin/python3
 
 # Run AWS Service Checks
-# Maintained By: Lucas Rountree (lucas.rountree@rhombuspower.com)
+# Maintained By: Lucas Rountree
 
 # Import General Modules
 import sys, argparse, json
