@@ -6,7 +6,7 @@
 # Command:
 # sudo bash zabbix_agent_install_ec2.sh <ip address> <region> <purpose> <company>
 # Example:
-# sudo bash zabbix_agent_install_ec2.sh 10.0.9.219 .us-west-2 dev hyperkube
+# sudo bash zabbix_agent_install_ec2.sh 10.0.9.219 .us-west-2 dev thiscompany
 #
 # Set up variables
 al2_agent_url="https://repo.zabbix.com/zabbix/6.4/rhel/7/x86_64/zabbix-release-6.4-1.el7.noarch.rpm"
