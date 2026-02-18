@@ -11,7 +11,7 @@
 # Set up variables
 al2_agent_url="https://repo.zabbix.com/zabbix/6.4/rhel/7/x86_64/zabbix-release-6.4-1.el7.noarch.rpm"
 al2023_agent_url="https://repo.zabbix.com/zabbix/6.4/rhel/9/x86_64/zabbix-release-6.4-1.el9.noarch.rpm"
-zabbix_server_ip="10.0.1.165"
+zabbix_server_ip="10.0.1.11"
 help_line="Usage: sudo bash zabbix_agent_install_ec2.sh <ip address> <region> <purpose> <company>"
 os_name=$(grep ^NAME /etc/os-release | cut -d '=' -f2 | tr -d '"')
 os_version=$(grep ^VERSION= /etc/os-release | cut -d '=' -f2 | tr -d '"')
